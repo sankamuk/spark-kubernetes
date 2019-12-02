@@ -1,0 +1,50 @@
+
+if [ $# -lt 1 ] 
+then
+    echo "You need to pass service to start."
+    echo "start [history|master|worker]"
+    exit 1
+fi
+
+docker network ls | grep spark
+if [ $? -ne 0 ]
+then
+    docker network create spark
+fi
+
+if [ $1 == 'history' ]
+then
+    echo "Starting history server"
+    docker run --network=spark -p8888:8888 -v/root/spark-kubernetes/spark-history:/spark-history --name spark-history spark-history
+elif [ $1 == 'master' ]
+then
+    if [ -z "$2" ] 
+    then
+        master_name="spark-master"
+        master_port=7777
+    else
+        master_name="spark-master-$2"
+        master_port=$(expr 7777 + $2)
+    fi
+    echo "Starting master server at ${master_name} at port ${master_port}"
+    docker run --network=spark -e"MASTER_SPARK=${master_name}" -e"MASTER_SPARK_PORT=${master_port}" -p"${master_port}:${master_port}" -v"/root/spark-kubernetes/spark-history:/spark-history" --name ${master_name} spark-master 
+elif [ $1 == 'worker' ]
+then
+    if [ -z "$2" ]
+    then
+        master_name="spark-master"
+        master_port=7777
+        worker_name="spark-worker"
+    else
+        master_name="spark-master-$2"
+        master_port=$(expr 7777 + $2)
+        worker_name="spark-worker-$2"
+    fi
+    [ ! -z "$3" ] && worker_name="${worker_name}-$3"
+    echo "Starting worker server ${worker_name} connecting to master ${master_name}"
+    docker run --network=spark -e"MASTER_SPARK=${master_name}" -e"MASTER_SPARK_PORT=${master_port}" -v"/root/spark-kubernetes/spark-history:/spark-history" --name ${worker_name} spark-worker
+else
+    echo "You need to pass service to start."
+    echo "start [history|master|worker]"
+    exit 1
+fi

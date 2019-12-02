@@ -1,0 +1,40 @@
+if [ ! -d apps/spark2 ]
+then
+    echo "Downloading Spark"
+    wget https://www-eu.apache.org/dist/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz
+
+    echo "Extracting Spark"
+    tar -zxvf spark-2.4.4-bin-hadoop2.7.tgz -C apps/
+    mv apps/spark-2.4.4-bin-hadoop2.7 apps/spark2
+    rm -f spark-2.4.4-bin-hadoop2.7.tgz
+
+    echo "Distributing container specific configuration and scripts"
+    cp apps/conf /apps/spark2/conf
+    cp apps/script/ /apps/spark2/script/
+fi
+
+echo "Removing intermediate images"
+docker images | grep none | awk '{ print "docker image rm -f "$3 }' | sh
+
+echo "Stopping running containers"
+docker ps | grep spark | awk '{ print "docker stop "$1 }' | sh
+
+echo "Deleting old container images"
+docker ps -a | grep spark | awk '{ print "docker rm -f "$1 }' | sh
+
+[ $1 == 'stop' ] && exit 0
+
+echo "Creating Spark History Server image"
+cp -f Dockerfile-History Dockerfile
+docker build . -t spark-history
+
+echo "Creating Spark Master image"
+cp -f Dockerfile-SparkMaster Dockerfile
+docker build . -t spark-master
+
+echo "Creating Spark Worker image"
+cp -f Dockerfile-SparkWorker Dockerfile
+docker build . -t spark-worker 
+
+echo "Removing temporary files"
+rm -f Dockerfile

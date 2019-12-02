@@ -1,0 +1,3 @@
+#!/bin/sh
+
+/sdh/spark2/sbin/start-history-server.sh
