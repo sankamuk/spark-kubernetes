@@ -1,0 +1,12 @@
+#!/bin/sh
+
+CLIENT_DEF_FILE=/apps/resource/client.def
+APP_TYPE=$(cat $CLIENT_DEF_FILE | grep type | awk -F'=' '{ print $2 }')
+
+if [ $APP_TYPE == "python" ]
+then
+    echo "Starting PYSPARK application."
+    APP_FILE=$(cat $CLIENT_DEF_FILE | grep appfile | awk -F'=' '{ print $2 }')
+    /sdh/spark2/bin/spark-submit --master spark://${MASTER_SPARK}:${MASTER_SPARK_PORT} --deploy-mode client /apps/resource/${APP_FILE}
+fi
+

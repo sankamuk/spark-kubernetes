@@ -1,5 +1,0 @@
-#!/bin/sh
-
-unset SPARK_MASTER_PORT 
-
-/sdh/spark2/sbin/start-slave.sh spark://${MASTER_SPARK}:${MASTER_SPARK_PORT}

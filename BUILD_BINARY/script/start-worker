@@ -1,0 +1,32 @@
+#!/bin/sh
+
+IDLE_THRESH=2
+unset SPARK_MASTER_PORT 
+
+/sdh/spark2/sbin/start-slave.sh spark://${MASTER_SPARK}:${MASTER_SPARK_PORT} &
+
+echo "*** Lifecycle listener. Initial bootstrap wait time."
+sleep ${IDLE_THRESH}m
+
+echo "*** Lifecycle listener. Starting to look for an active master."
+while :
+do
+	nc -vz ${MASTER_SPARK} ${MASTER_SPARK_PORT}
+	running_app=$?
+	if [ ${running_app} -ne 0 ]	
+	then
+		echo "*** Lifecycle listener. Spark Master not active, wait for ${IDLE_THRESH} minutes before termination."
+		sleep ${IDLE_THRESH}m
+		nc -vz ${MASTER_SPARK} ${MASTER_SPARK_PORT}
+		running_app=$?
+		if [ ${running_app} -ne 0 ]
+		then
+			echo "*** Lifecycle listener. Spark Master still not active, initiating termination."
+			exit 0
+		fi
+	else
+		echo "*** Lifecycle listener. Spark Master active, wait for ${IDLE_THRESH} minutes before revalidate."
+		sleep ${IDLE_THRESH}m
+	fi
+done
+

@@ -1,8 +1,0 @@
-FROM java:openjdk-8-jdk 
-
-RUN mkdir /sdh/
-COPY apps/spark2 /sdh/spark2 
-ENV SPARK_NO_DAEMONIZE TRUE
-
-ENTRYPOINT ["/sdh/spark2/sbin/start-worker"]
-

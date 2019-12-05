@@ -1,0 +1,64 @@
+# Deployment : Spark Cluster Storage
+---
+# History Server Volume Defination
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: __YOUR_APP__-spark-history-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 50Mi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/Users/apple/TEST/spark-kubernetes/LOCAL_STORAGE/spark-history/__YOUR_APP__"
+
+---
+# History Server Volume Claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: __YOUR_APP__-spark-history-volume-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Mi
+
+---
+# History Server Volume Defination
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: __YOUR_APP__-spark-app-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/Users/apple/TEST/spark-kubernetes/LOCAL_STORAGE/spark-app/__YOUR_APP__"
+
+---
+# App Volume Claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: __YOUR_APP__-spark-app-volume-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Mi
+
+

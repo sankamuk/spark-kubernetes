@@ -1,0 +1,35 @@
+# Deployment: Run Spark Client
+---
+cat application.yml 
+apiVersion: v1
+kind: Pod
+metadata: 
+    name: __YOUR_APP__-spark-client
+spec: 
+    containers:
+    -   name: __YOUR_APP__-spark-client
+        image: docker.io/sanmuk21/sdh-spark-kubernetes:1.0.2.4
+        command:
+        - "/sdh/spark2/sbin/start-client"
+        env:
+        - name: MASTER_SPARK
+          value: "__YOUR_APP__-spark-master"
+        - name: MASTER_SPARK_PORT
+          value: "7777"
+        - name: MASTER_SPARK_UI_PORT
+          value: "8888"
+        resources :
+          requests :
+            cpu : "250m"
+            memory : "512Mi"
+          limits :
+             cpu : "250m"
+             memory : "512Mi"
+        volumeMounts:
+        -   name: __YOUR_APP__-spark-app
+            mountPath: /apps/resource/
+    volumes:
+    -   name: __YOUR_APP__-spark-app
+        persistentVolumeClaim:
+            claimName: __YOUR_APP__-spark-app-volume-claim 
+

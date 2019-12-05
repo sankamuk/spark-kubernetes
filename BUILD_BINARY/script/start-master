@@ -1,0 +1,31 @@
+#!/bin/sh
+
+IDLE_THRESH=2
+unset SPARK_MASTER_PORT 
+
+/sdh/spark2/sbin/start-master.sh --ip ${MASTER_SPARK} --port ${MASTER_SPARK_PORT} --webui-port ${MASTER_SPARK_UI_PORT} &
+
+echo "*** Lifecycle listener. Initial bootstrap wait time."
+sleep ${IDLE_THRESH}m
+
+echo "*** Lifecycle listener. Starting to look for an idle master."
+while :
+do
+	running_app=$(curl -s http://${MASTER_SPARK}:${MASTER_SPARK_UI_PORT}/json/ | grep activeapps | awk -F'[' '{ print $2 }' | awk -F']' '{ print $1 }' | sed 's/^[[:space:]]*//g')
+	echo "*** Lifecycle listener. Current master executing ${running_app} application(s)."
+	if [ -z "${running_app}" ]	
+	then
+		echo "*** Lifecycle listener. Spark Master idle, wait for ${IDLE_THRESH} minutes before termination."
+		sleep ${IDLE_THRESH}m
+		running_app=$(curl -s http://${MASTER_SPARK}:${MASTER_SPARK_UI_PORT}/json/ | grep activeapps | awk -F'[' '{ print $2 }' | awk -F']' '{ print $1 }' | sed 's/^[[:space:]]*//g')
+		if [ -z "${running_app}" ]
+		then
+			echo "*** Lifecycle listener. Spark Master still idle, initiating termination."
+			exit 0
+		fi
+	else
+		echo "*** Lifecycle listener. Spark Master not idle, wait for ${IDLE_THRESH} minutes before revalidate."
+		sleep ${IDLE_THRESH}m
+	fi
+done
+

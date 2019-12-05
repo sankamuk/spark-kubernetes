@@ -1,20 +1,12 @@
-if [ ! -d apps/spark2 ]
-then
-    echo "Downloading Spark"
-    wget https://www-eu.apache.org/dist/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz
 
-    echo "Extracting Spark"
-    tar -zxvf spark-2.4.4-bin-hadoop2.7.tgz -C apps/
-    mv apps/spark-2.4.4-bin-hadoop2.7 apps/spark2
-    rm -f spark-2.4.4-bin-hadoop2.7.tgz
-
-    echo "Distributing container specific configuration and scripts"
-    cp apps/conf /apps/spark2/conf
-    cp apps/script/ /apps/spark2/script/
-fi
+clean() {
 
 echo "Removing intermediate images"
 docker images | grep none | awk '{ print "docker image rm -f "$3 }' | sh
+
+}
+
+stop() {
 
 echo "Stopping running containers"
 docker ps | grep spark | awk '{ print "docker stop "$1 }' | sh
@@ -22,19 +14,41 @@ docker ps | grep spark | awk '{ print "docker stop "$1 }' | sh
 echo "Deleting old container images"
 docker ps -a | grep spark | awk '{ print "docker rm -f "$1 }' | sh
 
-[ $1 == 'stop' ] && exit 0
+}
 
-echo "Creating Spark History Server image"
-cp -f Dockerfile-History Dockerfile
-docker build . -t spark-history
+build() {
 
-echo "Creating Spark Master image"
-cp -f Dockerfile-SparkMaster Dockerfile
-docker build . -t spark-master
+echo "Starting to build all containers"
 
-echo "Creating Spark Worker image"
-cp -f Dockerfile-SparkWorker Dockerfile
-docker build . -t spark-worker 
+if [ ! -d BUILD_BINARY/spark2 ]
+then
+    echo "Downloading Spark"
+    which wget
+    if [ $? -eq 0 ] ; then
+        wget https://www-eu.apache.org/dist/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz
+    else
+        curl -s -k https://www-eu.apache.org/dist/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz --output spark-2.4.4-bin-hadoop2.7.tgz
+    fi
+    echo "Extracting Spark"
+    tar -zxvf spark-2.4.4-bin-hadoop2.7.tgz -C BUILD_BINARY/
+    mv BUILD_BINARY/spark-2.4.4-bin-hadoop2.7 BUILD_BINARY/spark2
+    rm -f spark-2.4.4-bin-hadoop2.7.tgz
 
-echo "Removing temporary files"
-rm -f Dockerfile
+    echo "Distributing container specific configuration and scripts"
+    cp BUILD_BINARY/conf/* BUILD_BINARY/spark2/conf/
+    cp BUILD_BINARY/script/* BUILD_BINARY/spark2/sbin/
+fi
+
+echo "Creating Spark Server image"
+docker build . -t sanmuk21/sdh-spark-kubernetes:1.0.2.4
+#docker push sanmuk21/sdh-spark-kubernetes:1.0.2.4
+
+}
+
+echo "Parameter passed: $1"
+[ -z "${1}" ] && exit 0
+for i in $(echo ${1} | tr ',' '\n')
+do
+	${i}
+done
+

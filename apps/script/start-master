@@ -1,5 +1,0 @@
-#!/bin/sh
-
-unset SPARK_MASTER_PORT 
-
-/sdh/spark2/sbin/start-master.sh --ip ${MASTER_SPARK} --port ${MASTER_SPARK_PORT}
