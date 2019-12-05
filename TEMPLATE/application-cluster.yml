@@ -1,0 +1,106 @@
+# Deployment: Spark Cluster
+#VARIABLE:__YOUR_APP__:dtl
+---
+# Spark Master
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: __YOUR_APP__-spark-master-deployment
+spec:
+  selector:
+    matchLabels:
+      app: __YOUR_APP__-spark-master
+  replicas: 1 
+  template:
+    metadata:
+      labels:
+        app: __YOUR_APP__-spark-master
+    spec:
+      containers:
+      - name: __YOUR_APP__-spark-master
+        image: docker.io/sanmuk21/sdh-spark-kubernetes:1.0.2.4
+        command:
+        - "/sdh/spark2/sbin/start-master-noautostop"
+        env:
+        - name: MASTER_SPARK
+          value: "__YOUR_APP__-spark-master"
+        - name: MASTER_SPARK_PORT
+          value: "7777"
+        - name: MASTER_SPARK_UI_PORT
+          value: "8888"
+        ports:
+        - containerPort: 7777
+          protocol: TCP
+        resources :
+          requests :
+            cpu : "250m"
+            memory : "512Mi"
+          limits :
+             cpu : "250m"
+             memory : "512Mi"
+        volumeMounts:
+        -   name: __YOUR_APP__-spark-master-vol
+            mountPath: /spark-history
+      volumes:
+      -   name: __YOUR_APP__-spark-master-vol
+          persistentVolumeClaim:
+            claimName: __YOUR_APP__-spark-history-volume-claim
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: __YOUR_APP__-spark-master
+  labels:
+    name: __YOUR_APP__-spark-master
+spec:
+  ports:
+  - name: spark
+    protocol: TCP
+    port: 7777
+  selector:
+    app: __YOUR_APP__-spark-master
+
+---
+# Spark Worker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: __YOUR_APP__-spark-worker-deployment
+spec:
+  selector:
+    matchLabels:
+      app: __YOUR_APP__-spark-worker
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: __YOUR_APP__-spark-worker
+    spec:
+      containers:
+      - name: __YOUR_APP__-spark-worker
+        image: docker.io/sanmuk21/sdh-spark-kubernetes:1.0.2.4
+        command:
+        - "/sdh/spark2/sbin/start-worker-noautostop"
+        env:
+        - name: MASTER_SPARK
+          value: "__YOUR_APP__-spark-master"
+        - name: MASTER_SPARK_PORT
+          value: "7777"
+        - name: MASTER_SPARK_UI_PORT
+          value: "8888"
+        resources :
+          requests :
+            cpu : "250m"
+            memory : "512Mi"
+          limits :
+             cpu : "250m"
+             memory : "512Mi"
+        volumeMounts:
+        -   name: __YOUR_APP__-spark-worker-vol
+            mountPath: /spark-history
+      volumes:
+      -   name: __YOUR_APP__-spark-worker-vol
+          persistentVolumeClaim:
+            claimName: __YOUR_APP__-spark-history-volume-claim
+

@@ -1,0 +1,54 @@
+#!/bin/bash
+# Startup Script to launch Kubernetes deployments
+
+# Choose the deployment to trigger
+NL=$'\n'
+count=1
+map=""
+for i in $(ls  TEMPLATE/application-*)
+do
+  deploymt=$(echo $i | awk -F'-' '{ print $2 }' | awk -F'.' '{ print $1 }')
+  echo "$count - $deploymt"
+  map="${count}@${deploymt}${NL}${map}"
+  count=$(expr $count + 1)
+done
+echo ""
+read -p "Please select your deployment: " ch
+chtmp=$(echo "$map" | grep $ch | awk -F@ '{ print $2 }')
+[ -z "$chtmp" ] && echo "Wrong choice." && exit 1
+cp TEMPLATE/application-${chtmp}.yml application.yml
+echo ""
+
+# Prepare template
+map=""
+for i in $(grep "#VARIABLE:" application.yml | awk -F':' '{ print $2 }')
+do
+  v=$(grep "#VARIABLE:" application.yml | grep $i | awk -F':' '{ print $3 }')
+  read -p"Provide value for $(grep "#VARIABLE:" application.yml | grep $i | awk -F':' '{ print $2 }')[$v]: " v
+  [ -z "$v" ] && v=$(grep "#VARIABLE:" application.yml | grep $i | awk -F':' '{ print $3 }')
+  map="${i}^${v}${NL}${map}"
+done
+
+for i in $(echo "$map")
+do
+  k=$(echo $i | awk -F'^' '{ print $1 }')
+  v=$(echo $i | awk -F'^' '{ print $2 }')
+  echo -e "\nReplacing ${k} with ${v}."
+  sed 's#'${k}'#'${v}'#g' application.yml > application.yml.tmp
+  mv application.yml.tmp application.yml
+done
+echo ""
+
+# Deploying 
+read -p"Specify your action start or stop [stop]? " ch
+[ -z "$ch" ] && ch="stop"
+if [ $ch == "start" ]
+then
+  kubectl create -f application.yml
+elif [ $ch == "stop" ]
+then
+  kubectl delete -f application.yml
+else
+  echo "Invalid operation selected."
+fi
+rm -f application.yml

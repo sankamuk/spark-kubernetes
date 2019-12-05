@@ -1,4 +1,5 @@
 # Deployment: Run Spark Client
+#VARIABLE:__YOUR_APP__:dtl
 ---
 cat application.yml 
 apiVersion: v1

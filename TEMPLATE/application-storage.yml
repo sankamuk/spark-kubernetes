@@ -1,4 +1,6 @@
 # Deployment : Spark Cluster Storage
+#VARIABLE:__YOUR_APP__:dtl
+#VARIABLE:__YOUR_STORAGE_HOME__:/Users/apple/TEST/spark-kubernetes/LOCAL_STORAGE
 ---
 # History Server Volume Defination
 apiVersion: v1
@@ -14,7 +16,7 @@ spec:
   accessModes:
     - ReadWriteMany
   hostPath:
-    path: "/Users/apple/TEST/spark-kubernetes/LOCAL_STORAGE/spark-history/__YOUR_APP__"
+    path: "__YOUR_STORAGE_HOME__/spark-history/__YOUR_APP__"
 
 ---
 # History Server Volume Claim
@@ -45,7 +47,7 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/Users/apple/TEST/spark-kubernetes/LOCAL_STORAGE/spark-app/__YOUR_APP__"
+    path: "__YOUR_STORAGE_HOME__/spark-app/__YOUR_APP__"
 
 ---
 # App Volume Claim
