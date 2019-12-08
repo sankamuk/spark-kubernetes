@@ -1,0 +1,197 @@
+Step 1: Download Spark binary and create Airflow Startup script.
+
+----------------------------------------------
+[root@server airflow]# cat start.sh 
+#!/bin/bash
+
+airflow initdb
+
+cp -r /root/airflow.cfg.tmp /root/airflow/airflow.cfg
+
+airflow scheduler &
+
+sleep 10
+
+airflow webserver 
+----------------------------------------------
+
+Step 2: Build your Airflow Instance.
+
+----------------------------------------------
+FROM java:openjdk-8-jdk 
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update --fix-missing ; exit 0
+RUN apt-get -qq install build-essential autoconf libtool pkg-config python-opengl python-imaging python-pyrex python-pyside.qtopengl idle-python2.7 qt4-dev-tools qt4-designer libqtgui4 libqtcore4 libqt4-xml libqt4-test libqt4-script libqt4-network libqt4-dbus python-qt4 python-qt4-gl libgle3 python-dev
+RUN apt-get -qq install python-pip
+RUN pip install --upgrade pip
+ARG SLUGIFY_USES_TEXT_UNIDECODE=yes
+ARG AIRFLOW_HOME=/newfs/software
+RUN pip install setuptools -U
+RUN pip install "apache-airflow[]==1.10.2"
+RUN pip install --ignore-installed six
+COPY spark2 /sdh/spark2
+COPY start.sh /start.sh
+COPY airflow.cfg.tmp /root/
+
+EXPOSE 8080
+
+ENTRYPOINT ["/start.sh"]
+----------------------------------------------
+
+docker build . -t airflow
+
+Step 3: Build a One Node Spark Standalone Cluster docker image.
+
+Start Script for One Node Standalone Cluster
+----------------------------------------------
+[root@server airflow]# cat start-onenode 
+#!/bin/bash
+
+mkdir -p /spark-history
+
+unset SPARK_MASTER_PORT
+
+
+/sdh/spark2/sbin/start-master.sh --ip $(hostname -i) --port 7700 --webui-port 8800 &
+sleep 15
+/sdh/spark2/sbin/start-slave.sh spark://$(hostname -i):7700
+----------------------------------------------
+
+
+Docker File
+----------------------------------------------
+FROM java:openjdk-8-jdk 
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update ; exit 0
+RUN apt-get -qq install netcat
+RUN mkdir /sdh/
+COPY apps/spark2 /sdh/spark2 
+ENV SPARK_NO_DAEMONIZE TRUE
+COPY start-onenode /sdh/spark2/sbin/
+
+ENTRYPOINT ["/sdh/spark2/sbin/start-onenode"]
+----------------------------------------------
+
+Step 4: Start Airflow Instance and Spark Cluster
+
+[root@server airflow]# docker run --network=airflow -p 8888:8080 airflow
+[root@server airflow]# docker run --network=airflow -p 8800:8800 -p 7700:7700 --name spark-master spark-airflow
+
+Step 5: Create Connection in Airflow
+
+admin -> connection -> create
+
+Conn Id spark_remote
+Host spark://spark-master:7700
+Extra  {"deploy_mode": "client", "spark_home": "/sdh/spark2", "spark_binary": "/sdh/spark2/bin/spark-submit"}
+
+Step 6: Create your Spark Application
+----------------------------------------------
+[root@server airflow]# cat app.py 
+from pyspark import SparkConf
+from pyspark import SparkContext
+
+conf = SparkConf()
+conf.setAppName('Test PySpark Airflow')
+sc = SparkContext(conf=conf)
+
+rdd = sc.parallelize(range(10)).collect()
+print rdd
+----------------------------------------------
+
+Step 7: Create your DAG defination
+
+----------------------------------------------
+[root@server airflow]# cat my_dag_spark_001.py 
+import airflow
+from airflow.models import DAG
+from airflow.contrib.operators.spark_submit_operator import SparkSubmitOperator
+
+from builtins import range
+from datetime import timedelta,datetime
+
+dag = DAG(
+    dag_id='my_dag_spark_001',
+    schedule_interval='0 0 * * *',
+    start_date=datetime(2019, 12, 7),
+    dagrun_timeout=timedelta(minutes=60),
+)
+
+run_spark = SparkSubmitOperator(
+    task_id='spark_001',
+    dag=dag,
+    conn_id='spark_remote',
+    application='/app.py'
+)
+
+run_spark
+
+----------------------------------------------
+
+Step 8: Create DAG Directory, Deploy DAG and Spark Application
+
+docker exec $(docker ps | grep "start.sh" | awk '{ print $1 }') mkdir /spark-history
+docker exec $(docker ps | grep "start.sh" | awk '{ print $1 }') mkdir /root/airflow/dags/
+docker cp app.py $(docker ps | grep "/start.sh" | awk '{ print $1 }'):/app.py
+docker cp my_dag_spark_001.py $(docker ps | grep "/start.sh" | awk '{ print $1 }'):/root/airflow/dags/my_dag_spark_001.py
+
+
+
+
+kubectl run -i --tty myshell --image=ellerbrock/alpine-bash-curl-ssl -- bash
+
+
+curl -sSk --key client.key --cert client.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/default/deployments
+
+curl -sSk --key client.key --cert client.crt -H "content-type: application/json" -X POST -d@deployment.json https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/default/deployments
+
+bash-4.4$ cat deployment.json 
+{
+	"apiVersion":"apps/v1",
+	"kind":"Deployment",
+	"metadata":{
+		"name":"nginx-deployment",
+		"labels":{
+			"app":"nginx"
+		}
+	},
+	"spec": {
+	"replicas" : 1,
+	"selector": {
+		"matchLabels" : {
+			"app":"nginx"
+		}
+	},
+	"template" : {
+	"metadata" : {
+		"labels" : {
+			"app":"nginx"
+		}
+	},
+	"spec":{
+		"containers":[
+			{
+				"name":"ngnix",
+				"image":"nginx:1.7.9",
+				"ports":[
+				  {
+				    "containerPort": 80 
+			    }
+				]
+			}
+		]
+	}
+ }
+}
+}
+
+
+curl -sSk --key client.key --cert client.crt -H "content-type: application/json" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/default/deployments/nginx-deployment
+
+
+
+
+
+
