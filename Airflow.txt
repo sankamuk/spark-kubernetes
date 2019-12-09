@@ -192,6 +192,120 @@ curl -sSk --key client.key --cert client.crt -H "content-type: application/json"
 
 
 
+{
+	"apiVersion":"apps/v1",
+	"kind":"Deployment",
+	"metadata":{
+		"name":"spark",
+		"labels":{
+			"app":"spark"
+		}
+	},
+	"spec": {
+	"replicas" : 1,
+	"selector": {
+		"matchLabels" : {
+			"app":"spark"
+		}
+	},
+	"template" : {
+	"metadata" : {
+		"labels" : {
+			"app":"spark"
+		}
+	},
+	"spec":{
+		"containers":[
+			{
+				"name":"spark",
+				"image":"sanmuk21/sdh-spark-kubernetes:1.0.2.4",
+				"ports":[
+				  {
+				    "containerPort": 7700,
+				    "protocol": "TCP"
+			      }
+				],
+				"command": "/sdh/spark2/sbin/start-all"
+			}
+		]
+	}
+ }
+}
+}
+
+
+# Application Volume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: airflow-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 50Mi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/Users/apple/TEST/airflow/apps/"
+
+---
+# Volume Claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: airflow-volume-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Mi
+
+---
+apiVersion: v1
+kind: Pod
+metadata: 
+    name: airflow
+    labels:
+        app: airflow
+spec: 
+    containers:
+    -   name: airflow
+        image: sanmuk21/sdh-airflow:1.0.1.10.2
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        -   name: app-volume
+            mountPath: /apps
+    volumes:
+    -   name: app-volume
+        persistentVolumeClaim:
+            claimName: airflow-volume-claim
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow
+spec:
+  selector:
+    app: airflow
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: NodePort
+
+
+(base) apples-MacBook-Air:airflow apple$ /Users/apple/minikube service airflow --url
+http://192.168.99.100:30434
+
+
+
+
 
 
 
