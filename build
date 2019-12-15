@@ -1,54 +1,132 @@
+# Spark Kubernetes Build - Tool
 
 clean() {
 
-echo "Removing intermediate images"
-docker images | grep none | awk '{ print "docker image rm -f "$3 }' | sh
+    echo "Removing intermediate images"
+    docker images | grep none | awk '{ print "docker image rm -f "$3 }' | sh
 
 }
 
 stop() {
 
-echo "Stopping running containers"
-docker ps | grep spark | awk '{ print "docker stop "$1 }' | sh
+    echo "Stopping running containers"
+    if [ "${build_env}" == "docker" ] ; then
+        docker ps | grep -v 'CONTAINER ID' | awk '{ print "docker stop "$1 }' | sh
+    else
+        for r in deployment configmap service pod
+        do
+            echo "Deleting resource of type ${r}."
+            for rt in $(kubectl get $r -n ${namespace_name} | grep -v "^NAME" | awk '{ print $1 }')
+            do
+                echo "Deleting resource $r $rt from namespace ${namespace_name}."
+                #kubectl delete $r $rt -n ${namespace_name}
+            done
+        done
+    fi
 
-echo "Deleting old container images"
-docker ps -a | grep spark | awk '{ print "docker rm -f "$1 }' | sh
+    sleep 10
+
+    echo "Deleting old container images"
+    #docker ps -a | grep "Exited (" | awk '{ print "docker rm -f "$1 }' | sh
 
 }
 
 build() {
 
-echo "Starting to build all containers"
+echo "Starting to build containers"
 
-if [ ! -d BUILD_BINARY/spark2 ]
-then
-    echo "Downloading Spark"
-    which wget
-    if [ $? -eq 0 ] ; then
-        wget https://www-eu.apache.org/dist/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz
-    else
-        curl -s -k https://www-eu.apache.org/dist/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz --output spark-2.4.4-bin-hadoop2.7.tgz
+if [ "${image_name}" == "spark" ] ; then
+    echo "Starting to build Spark Container."
+    cd BUILD_BINARY/spark
+    if [ ! -d spark2 ]
+    then
+        echo "Downloading Spark"
+        which wget
+        if [ $? -eq 0 ] ; then
+            wget https://www-eu.apache.org/dist/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz
+        else
+            curl -s -k https://www-eu.apache.org/dist/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz --output spark-2.4.4-bin-hadoop2.7.tgz
+        fi
+        echo "Extracting Spark"
+        tar -zxvf spark-2.4.4-bin-hadoop2.7.tgz
+        mv spark-2.4.4-bin-hadoop2.7 spark2
+        rm -f spark-2.4.4-bin-hadoop2.7.tgz
+
+        echo "Distributing container specific configuration and scripts"
+        #cp BUILD_BINARY/conf/* BUILD_BINARY/spark2/conf/
+        #cp BUILD_BINARY/script/* BUILD_BINARY/spark2/sbin/
     fi
-    echo "Extracting Spark"
-    tar -zxvf spark-2.4.4-bin-hadoop2.7.tgz -C BUILD_BINARY/
-    mv BUILD_BINARY/spark-2.4.4-bin-hadoop2.7 BUILD_BINARY/spark2
-    rm -f spark-2.4.4-bin-hadoop2.7.tgz
-
-    echo "Distributing container specific configuration and scripts"
-    cp BUILD_BINARY/conf/* BUILD_BINARY/spark2/conf/
-    cp BUILD_BINARY/script/* BUILD_BINARY/spark2/sbin/
+    echo "Creating Spark Server image"
+    docker build . -t sanmuk21/sdh-spark-kubernetes:1.0.2.4
+    #docker push sanmuk21/sdh-spark-kubernetes:1.0.2.4
+    cd ../../
+elif [ "${image_name}" == "airflow" ] ; then
+    echo "Starting to build Airflow Container."
+    cd BUILD_BINARY/airflow
+    docker build . -t sanmuk21/sdh-airflow:1.0.1.10.2
+    #docker push sanmuk21/sdh-airflow:1.0.1.10.2
+    cd ../../
 fi
-
-echo "Creating Spark Server image"
-docker build . -t sanmuk21/sdh-spark-kubernetes:1.0.2.4
-#docker push sanmuk21/sdh-spark-kubernetes:1.0.2.4
 
 }
 
-echo "Parameter passed: $1"
-[ -z "${1}" ] && exit 0
-for i in $(echo ${1} | tr ',' '\n')
-do
-	${i}
-done
+usage(){
+    echo ""
+    echo "TITLE: Spark Kubernetes Build - Tool"
+    echo "EXECUTION: build [BUILD ENVIRONMENT] [BUILD OPTIONS] [IMAGE] [NAMESPACES]"
+    echo "PARAMETERS:"
+    echo "           BUILD ENVIRONMENT - Your image build environment. Provide one of the below option."
+    echo "                               docker - If you want to build and deploy image to your local docker platform."
+    echo "                               kube - If you want to build and deploy image to your Kubernetes(Minikube) platform"
+    echo "           BUILD OPTIONS - Your build actions. Chain action by adding comma (,) separated action."
+    echo "                           clean - Clean intermediate images and old unused container."
+    echo "                           stop - Stop any container running."
+    echo "                           build - Build image."
+    echo "           [OPT] IMAGE - Image to build. Default: Spark."
+    echo "           [OPT] NAMESPACES - Namespace to stop and clean container."
+}
 
+# __MAIN__
+
+if [ -z "${1}" ] ; then
+    echo "ERROR: Need to pass your build parameter. Exiting !!!"
+    usage
+    exit 1
+fi
+build_env=$1
+if [ "${build_env}" != "kube" -a "${build_env}" != "docker" ] ; then
+    echo "ERROR: Need to pass which environment you want to build. Exiting !!!"
+    usage
+    exit 1
+fi 
+echo "OPTIONS PASSED: $2"
+[ -z "${2}" ] && exit 0
+for i in $(echo ${2} | tr ',' '\n')
+do
+    if [ "${i}" != "clean" -a "${i}" != "stop" -a ${i} != "build" ] ; then
+        echo "ERROR: Need to pass valid option. Exiting !!!"
+        usage
+        exit 1
+    fi
+done
+build_option=$2
+
+
+image_name="spark"
+namespace_name="default"
+if [ ! -z "${3}" ] ; then
+    image_name="$3"
+    if [ ! -z "${4}" ] ; then
+        namespace_name="$4"
+    fi
+fi
+
+if [ "${build_env}" == "kube" ] ; then
+    echo "INFO: Building for Kubernetes, thus setting Kubernetes Repository."
+    eval $(~/minikube docker-env)
+fi
+
+for i in $(echo ${build_option} | tr ',' '\n')
+do
+    ${i}
+done

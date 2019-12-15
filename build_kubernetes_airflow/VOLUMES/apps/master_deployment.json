@@ -1,0 +1,73 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata":{
+    "name": "spark",
+    "namespace": "spark",
+    "labels":{
+      "app": "spark"
+    }
+  },
+  "spec": {
+    "replicas" : 1,
+    "selector": {
+      "matchLabels" : {
+        "app": "spark"
+      }
+    },
+    "template" : {
+      "metadata" : {
+        "labels" : {
+          "app": "spark"
+        }
+      },
+      "spec":{
+        "containers":[
+          {
+            "name": "spark",
+            "image": "sanmuk21/sdh-spark-kubernetes:1.0.2.4",
+            "env": [
+              {
+                "name": "MASTER_SPARK",
+                "value": "spark-master"
+              },
+              {
+                "name": "MASTER_SPARK_PORT",
+                "value": "7700"
+              },
+              {
+                "name": "MASTER_SPARK_UI_PORT",
+                "value": "8800"
+              }
+            ],
+            "ports":[
+              {
+                "containerPort": 7700,
+                "protocol": "TCP"
+              },
+              {
+                "containerPort": 8800,
+                "protocol": "TCP"
+              }
+            ],
+            "volumeMounts": [
+              {
+                "name": "spark-history-volume",
+                "mountPath": "/spark-history"
+              }
+            ],  
+            "command": [ "/sdh/spark2/sbin/start-master-noautostop" ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "spark-history-volume",
+            "persistentVolumeClaim": {
+              "claimName": "spark-history-volume-claim"
+            }
+          }
+        ]        
+      }
+    }
+  }
+}

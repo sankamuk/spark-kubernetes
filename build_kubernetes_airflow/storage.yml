@@ -1,0 +1,64 @@
+# Application Volume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: airflow-volume
+  namespace: spark
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 50Mi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/Users/apple/TEST/GIT/spark-kubernetes/build_kubernetes_airflow/VOLUMES/apps"
+
+---
+# Volume Claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: airflow-volume-claim
+  namespace: spark
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Mi
+
+---
+# Application Volume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: spark-history-volume
+  namespace: spark
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 50Mi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/Users/apple/TEST/GIT/spark-kubernetes/build_kubernetes_airflow/VOLUMES/history/spark"
+
+---
+# Volume Claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: spark-history-volume-claim
+  namespace: spark
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Mi

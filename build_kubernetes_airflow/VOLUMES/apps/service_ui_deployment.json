@@ -1,0 +1,20 @@
+{
+  "kind": "Service",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "spark-master-ui",
+    "namespace": "spark"
+  },
+  "spec": {
+    "ports": [
+      {
+        "protocol": "TCP",
+        "port": 8800
+      }
+    ],
+    "selector": {
+      "app": "spark"
+    },
+    "type": "NodePort"
+  }    
+}

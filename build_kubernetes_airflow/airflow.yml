@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Pod
+metadata: 
+    name: airflow
+    namespace: spark
+    labels:
+        app: airflow
+spec: 
+    containers:
+    -   name: airflow
+        image: sanmuk21/sdh-airflow:1.0.1.10.2
+        ports:
+        - name: airflow-ui
+          containerPort: 8080
+        - name: spark-client
+          containerPort: 4400
+        - name: spark-client-bm
+          containerPort: 65000
+        volumeMounts:
+        -   name: app-volume
+            mountPath: /apps
+        -   name: spark-history-volume
+            mountPath: /spark-history
+    volumes:
+    -   name: app-volume
+        persistentVolumeClaim:
+            claimName: airflow-volume-claim
+    -   name: spark-history-volume
+        persistentVolumeClaim:
+            claimName: spark-history-volume-claim
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow
+  namespace: spark
+spec:
+  selector:
+    app: airflow
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: NodePort
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-client
+  namespace: spark
+spec:
+  selector:
+    app: airflow 
+  ports:
+    - protocol: TCP
+      port: 4400
+      targetPort: 4400
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-client-bm
+  namespace: spark
+spec:
+  selector:
+    app: airflow 
+  ports:
+    - protocol: TCP
+      port: 65000
+      targetPort: 65000
+  type: ClusterIP

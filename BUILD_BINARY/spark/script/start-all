@@ -1,0 +1,10 @@
+#!/bin/sh
+
+unset SPARK_MASTER_PORT 
+
+/sdh/spark2/sbin/start-master.sh --ip $(hostname -i) --port 7700 --webui-port 8800 &
+
+sleep 15
+
+/sdh/spark2/sbin/start-slave.sh spark://$(hostname -i):7700
+
