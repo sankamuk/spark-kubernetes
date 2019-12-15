@@ -15,6 +15,7 @@ dag = DAG(
     schedule_interval='0 0 * * *',
     start_date=datetime(2019, 12, 11),
     dagrun_timeout=timedelta(minutes=60),
+    catchup=False
 )
 
 cluster_create = BashOperator(
