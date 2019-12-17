@@ -25,6 +25,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: history-__APP-ID__
+  namespace: __APP-NAMESPACE__
 spec:
   selector:
     app: history-__APP-ID__

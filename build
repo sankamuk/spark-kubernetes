@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 # Spark Kubernetes Build - Tool
 # Version: 1.0
 
@@ -7,6 +7,16 @@ clean() {
 
     echo "Removing intermediate images"
     docker images | grep none | awk '{ print "docker image rm -f "$3 }' | sh
+    echo "Removing airflow image"
+    docker image rm -f sanmuk21/sdh-airflow:1.0.1.10.2
+    echo "Removing spark image"
+    docker image rm -f sanmuk21/sdh-spark-kubernetes:1.0.2.4
+
+    echo "Delete Service Account access"
+    kubectl delete rolebinding spark${app_name}RoleBinding -n $namespace_name
+
+    echo "Delete Service Account"
+    kubectl delete serviceaccount sparkadm-${app_name} -n $namespace_name
 
 }
 
@@ -17,7 +27,7 @@ stop() {
     if [ "${build_env}" == "docker" ] ; then
         docker ps | grep -v 'CONTAINER ID' | awk '{ print "docker stop "$1 }' | sh
     else
-        for r in deployment configmap service pod
+        for r in deployment configmap service pod pvc pv
         do
             echo "Deleting resource of type ${r}."
             for rt in $(kubectl get $r -n ${namespace_name} | grep -v "^NAME" | awk '{ print $1 }')
@@ -41,7 +51,7 @@ build() {
     echo "Starting to build containers"
 
     echo "- Getting Spark Binary."
-    cd BUILD_BINARY/spark
+    cd ${script_home}/BUILD_BINARY/spark
     if [ ! -d spark2 ]
     then
         echo "Downloading Spark"
@@ -59,13 +69,12 @@ build() {
     echo "- Creating Spark Server image"
     docker build . -t sanmuk21/sdh-spark-kubernetes:1.0.2.4
     #docker push sanmuk21/sdh-spark-kubernetes:1.0.2.4
-    cd ../../
 
     echo "- Starting to build Airflow Container."
-    cd BUILD_BINARY/airflow
+    cd ${script_home}/BUILD_BINARY/airflow
     docker build . -t sanmuk21/sdh-airflow:1.0.1.10.2
     #docker push sanmuk21/sdh-airflow:1.0.1.10.2
-    cd ../../
+    cd ${script_home}/
 
 }
 
@@ -75,20 +84,21 @@ envconfig() {
     echo "Configuring Kubernetes environment."
     echo ""
     echo "- Creating Namespace $namespace_name"
+    did_create=0
     kubectl create namespace $namespace_name
-    [ $? -ne 0 ] && exit 1
+    [ $? -ne 0 ] && did_create=1
     echo ""
     echo "- Creating Service Account sparkadm-${app_name}"
     kubectl create serviceaccount sparkadm-${app_name} -n $namespace_name
     if [ $? -ne 0 ] ; then
-        kubectl delete namespace $namespace_name
+        [ $did_create -eq 0 ] && kubectl delete namespace $namespace_name
         exit 1
     fi
     echo ""
     echo "- Providing Service Account admin access to Namespace."
     kubectl create rolebinding spark${app_name}RoleBinding --clusterrole=admin --serviceaccount=${namespace_name}:sparkadm-${app_name} --namespace=$namespace_name 
     if [ $? -ne 0 ] ; then
-        kubectl delete namespace $namespace_name
+        [ $did_create -eq 0 ] && kubectl delete namespace $namespace_name
         kubectl delete serviceaccount sparkadm-${app_name} -n $namespace_name
     fi
 
@@ -102,10 +112,11 @@ genconfig() {
     [ $? -ne 0 ] && exit 1
     secret_name=$(kubectl get serviceaccount sparkadm-${app_name} -n ${namespace_name} -o jsonpath='{.secrets[0].name}')
     [ -z "${secret_name}" ] && exit 1
-    find ${script_home}/${app_name}/ -type f -exec sed -i 's/__APP-ID__/'${app_name}'/g' {} \;
-    find ${script_home}/${app_name}/ -type f -exec sed -i 's/__APP-NAMESPACE__/'${namespace_name}'/g' {} \;
-    find ${script_home}/${app_name}/ -type f -exec sed -i 's/__SERV-ACCNT-SECRET__/'${secret_name}'/g' {} \;
-    find ${script_home}/${app_name}/ -type f -exec sed -i 's/__PROJECT_ROOT__/'${script_home}'/g' {} \;
+    find ${script_home}/${app_name}/ -type f -exec sed -i.bck 's/__APP-ID__/'${app_name}'/g' {} \;
+    find ${script_home}/${app_name}/ -type f -exec sed -i.bck 's/__APP-NAMESPACE__/'${namespace_name}'/g' {} \;
+    find ${script_home}/${app_name}/ -type f -exec sed -i.bck 's/__SERV-ACCNT-SECRET__/'${secret_name}'/g' {} \;
+    find ${script_home}/${app_name}/ -type f -exec sed -i.bck 's#__PROJECT-ROOT__#'${script_home}'#g' {} \;
+    find ${script_home}/${app_name}/ -type f -name "*.bck" -exec rm -f {} \;
     echo "Completed generating deployment artifacts at ${script_home}/${app_name}."
 
 }
@@ -195,11 +206,11 @@ done
 
 # Validating required binary
 if [ "${build_env}" == "kube" ] ; then
-    if [ $(which kubectl ; echo $?) -ne 0 -o $(which minikube ; echo $?) -ne 0 ] ; then
+    if [ $(which kubectl >/dev/null 2>/dev/null ; echo $?) -ne 0 -o $(which minikube >/dev/null 2>/dev/null ; echo $?) -ne 0 ] ; then
         echo "ERROR: You need to have minikube and kubectl in your path. Exiting !!!"
         exit 1
     fi
-    if [ $(minikube status | wc -l) -ne $(minikube status | grep -i running | wc -l) ] ; then
+    if [ $(minikube status | grep -i running | wc -l) -lt 3 ] ; then
         echo "ERROR: Kubernetes Cluster not running. Exiting !!!"
         exit 1
     fi
@@ -215,5 +226,5 @@ fi
 for i in $(echo ${build_option} | tr ',' '\n')
 do
     echo "Executing $i."
-    #${i}
+    ${i}
 done

@@ -25,27 +25,27 @@ elif [ $1 == "delete" ] ; then
   TOKEN=$(< /secrets/token)
   NAMESPACE=$(< /secrets/namespace)
 
-  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/${NAMESPACE}/services/spark-master
+  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/${NAMESPACE}/services/spark-master-__APP-ID__
 
-  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/${NAMESPACE}/services/spark-master-ui
+  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/${NAMESPACE}/services/spark-master-ui-__APP-ID__
 
-  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/${NAMESPACE}/deployments/spark-worker
+  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/${NAMESPACE}/deployments/spark-worker-__APP-ID__
 
-  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/${NAMESPACE}/deployments/spark
+  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/${NAMESPACE}/deployments/spark-__APP-ID__
 
   echo "Completed deleting."
 
 elif [ $1 == "test" ] ; then
 
   echo "Waiting for cluster start..."
-  nc -vz spark-master 7700
+  nc -vz spark-master-__APP-ID__ 7700
   is_up=$?
   count=1
   while [ ${is_up} -ne 0 -a ${count} -lt 5 ]
   do
     echo "Cluster didnot started yet, waiting for 5 seconds."
     sleep 5
-    nc -vz spark-master 7700
+    nc -vz spark-master-__APP-ID__ 7700
     is_up=$?
     count=$(expr $count + 1)
   done
@@ -59,7 +59,7 @@ elif [ $1 == "test" ] ; then
 elif [ $1 == "connection_create" ] ; then
 
   echo "Creating cluster connection..."
-  airflow connections -a --conn_id 'spark_remote' --conn_type 'spark' --conn_host "spark://spark-master:7700" --conn_extra '{"deploy_mode": "client", "spark_home": "/sdh/spark2", "spark_binary": "/sdh/spark2/bin/spark-submit"}'
+  airflow connections -a --conn_id 'spark_remote' --conn_type 'spark' --conn_host "spark://spark-master-__APP-ID__:7700" --conn_extra '{"deploy_mode": "client", "spark_home": "/sdh/spark2", "spark_binary": "/sdh/spark2/bin/spark-submit"}'
 
 elif [ $1 == "connection_delete" ] ; then
 

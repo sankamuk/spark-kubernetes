@@ -2,7 +2,7 @@
   "kind": "Service",
   "apiVersion": "v1",
   "metadata": {
-    "name": "spark-master-__APP-ID__",
+    "name": "spark-master-__APP-ID__"
   },
   "spec": {
     "ports": [

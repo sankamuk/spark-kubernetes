@@ -58,7 +58,7 @@
           {
             "name": "spark-history-volume",
             "persistentVolumeClaim": {
-              "claimName": "spark-history-volume-claim"
+              "claimName": "history-vc-__APP-ID__"
             }
           }
         ]        
