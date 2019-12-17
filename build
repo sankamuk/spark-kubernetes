@@ -36,11 +36,11 @@ stop() {
 }
 
 # Build image
-image_build() {
+build() {
 
     echo "Starting to build containers"
 
-    echo "- Starting to build Spark Container."
+    echo "- Getting Spark Binary."
     cd BUILD_BINARY/spark
     if [ ! -d spark2 ]
     then
@@ -70,7 +70,7 @@ image_build() {
 }
 
 # Setup Kubernetes enviornment
-config_environment() {
+envconfig() {
 
     echo "Configuring Kubernetes environment."
     echo ""
@@ -95,7 +95,7 @@ config_environment() {
 }
 
 # Create Kubernetes deployment artifact
-generate_deployment() {
+genconfig() {
 
     echo "Genetation of Kubernetes deployment artifacts."
     cp -r ${script_home}/build_kubernetes_airflow ${script_home}/${app_name}
