@@ -3,11 +3,15 @@
 Production ready Apache Spark runtime on Kubernetes.
 
 
+
 ## Features:
+
 * Dynamic Infrastructure. Every job execution should easily setup the cluster before start and delete after job completion.
 * Spark Standalone Cluster Manager.
 * History events stored in Persistent Storage. History visible via a Spark History server in On-Demand basis.
 * Support Airflow based Job Scheduling.
+
+
 
 ## Project Detail:
 
@@ -17,6 +21,7 @@ Production ready Apache Spark runtime on Kubernetes.
 - The DAG creates Spark Cluster, creates nessesory Airflow configurations, executes Spark Job and tear down the Spark Cluster.
 - Airflow instance will act as the single instance running in the cluster. Note this project is by no mean aimed to show how to build a enterprise ready Airflow instance over Kubernetes so that all Spark Job can use the same Airlow instance. The aim is just to get the Airflow based orchestration going over Kubernetes for our Spark Job.
 - A history server can be ran on demand to view status and monitor the Spark Jobs over time.
+
 
 
 ## Usage:
@@ -82,64 +87,79 @@ kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100
 jar xvf <(curl -sL https://github.com/sankamuk/spark-kubernetes/archive/master.zip)
 ```
 
+
 ### Run Build Tool 
 
 Lets build the images and set up our cluster to host our application ***test*** in a dedicated namespace ***spark***
  and generate all required deploument artifact.
 
 ```
-./build -actions=build,envconfig,genconfig -namespace=spark -appname=test -runtime=kube
+$ ./build -actions=build,envconfig,genconfig -namespace=spark -appname=test -runtime=kube
 ```
 
 ***NOTE***: Your build process should take some time to build images. Once complete you should expect a folder names test in your project root directory.
+
 
 ### Deploy your Environment
 
 - Deploy your persistent storage to publish your application in Airflow Executor and Spark History volume all over.
 
 ```
-utility.sh deploystorage
+$ ./utility.sh deploystorage
 ``` 
 
 - Deploy your Airflow instance which will orchestrate your Spark Job.
 
 ```
-utility.sh deployairflow
+$ ./utility.sh deployairflow
 ```
+
 
 ### Check your Job Status
 
 - Get your Airflow UI. 
 
 ```
-utility.sh airflowui
+$ ./utility.sh airflowui
 ```
 
 - Enable disbale your DAG, trigger or let is run as per schedule from your Airflow UI. Also check your Job execution status and logs.
+
 
 ### Run History Server your Spark Job Dashboard
 
 - Run History Server Instance
 
 ```
-utility.sh deployhistory
+$ ./utility.sh deployhistory
 ```
 
 - Check History Server UI
 
 ```
-utility.sh historyui
+$ ./utility.sh historyui
 ```
 
+
 ### Delete your deployment
+
+Once you are done you can clean up the whole setup using "Build Tool". Note here you should mention your application name and the Namespace where your application was deployed.
+
+```
+$ ./build -actions=stop,clean -namespace=spark -appname=test -runtime=kube
+
+```
+
 
 
 ## Demo videos
 
-Environment Check -
-Build -
-Deploy Your Job -
-Validate -
+* Environment Check -
+* Build -
+* Deploy Your Job -
+* Validate -
+
+
 
 ## TO DO
 
