@@ -2,8 +2,7 @@
   "kind": "Service",
   "apiVersion": "v1",
   "metadata": {
-    "name": "spark-master",
-    "namespace": "spark"
+    "name": "spark-master-__APP-ID__",
   },
   "spec": {
     "ports": [
@@ -13,7 +12,7 @@
       }
     ],
     "selector": {
-      "app": "spark"
+      "app": "spark-__APP-ID__"
     },
     "type": "ClusterIP"
   }    

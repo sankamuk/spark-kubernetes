@@ -5,15 +5,16 @@ if [ $1 == "create" ] ; then
 
   echo "Starting the deployment"
 
-  TOKEN=$(< sparkadmin.token)
+  TOKEN=$(< /secrets/token)
+  NAMESPACE=$(< /secrets/namespace)
 
-  curl -sSk --cacert ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X POST -d@master_deployment.json https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/spark/deployments
+  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X POST -d@master_deployment.json https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/${NAMESPACE}/deployments
 
-  curl -sSk --cacert ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X POST -d@service_deployment.json https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/spark/services
+  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X POST -d@service_deployment.json https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/${NAMESPACE}/services
 
-  curl -sSk --cacert ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X POST -d@service_ui_deployment.json https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/spark/services
+  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X POST -d@service_ui_deployment.json https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/${NAMESPACE}/services
 
-  curl -sSk --cacert ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X POST -d@worker_deployment.json https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/spark/deployments
+  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X POST -d@worker_deployment.json https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/${NAMESPACE}/deployments
 
   echo "Completed deployment."
 
@@ -21,15 +22,16 @@ elif [ $1 == "delete" ] ; then
 
   echo "Deleteing the deployment"
 
-  TOKEN=$(< sparkadmin.token)
+  TOKEN=$(< /secrets/token)
+  NAMESPACE=$(< /secrets/namespace)
 
-  curl -sSk --cacert ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/spark/services/spark-master
+  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/${NAMESPACE}/services/spark-master
 
-  curl -sSk --cacert ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/spark/services/spark-master-ui
+  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/${NAMESPACE}/services/spark-master-ui
 
-  curl -sSk --cacert ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/spark/deployments/spark-worker
+  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/${NAMESPACE}/deployments/spark-worker
 
-  curl -sSk --cacert ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/spark/deployments/spark
+  curl -sSk --cacert /secrets/ca.crt -H "content-type: application/json" -H "Authorization: Bearer $TOKEN" -X DELETE https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/apps/v1/namespaces/${NAMESPACE}/deployments/spark
 
   echo "Completed deleting."
 

@@ -1,5 +1,7 @@
 # Spark Kubernetes Build - Tool
+# Version: 1.0
 
+# Cleans unused images from Image reopsitory
 clean() {
 
     echo "Removing intermediate images"
@@ -7,6 +9,7 @@ clean() {
 
 }
 
+# Stop any running container in relivent scope
 stop() {
 
     echo "Stopping running containers"
@@ -19,7 +22,7 @@ stop() {
             for rt in $(kubectl get $r -n ${namespace_name} | grep -v "^NAME" | awk '{ print $1 }')
             do
                 echo "Deleting resource $r $rt from namespace ${namespace_name}."
-                #kubectl delete $r $rt -n ${namespace_name}
+                kubectl delete $r $rt -n ${namespace_name}
             done
         done
     fi
@@ -27,11 +30,12 @@ stop() {
     sleep 10
 
     echo "Deleting old container images"
-    #docker ps -a | grep "Exited (" | awk '{ print "docker rm -f "$1 }' | sh
+    docker ps -a | grep "Exited (" | awk '{ print "docker rm -f "$1 }' | sh
 
 }
 
-build() {
+# Build image
+image_build() {
 
 echo "Starting to build containers"
 
@@ -70,63 +74,141 @@ fi
 
 }
 
+# Setup Kubernetes enviornment
+config_environment() {
+
+    echo "Configuring Kubernetes environment."
+    echo ""
+    echo "- Creating Namespace $namespace_name"
+    kubectl create namespace $namespace_name
+    [ $? -ne 0 ] && exit 1
+    echo ""
+    echo "- Creating Service Account sparkadm-${app_name}"
+    kubectl create serviceaccount sparkadm-${app_name} -n $namespace_name
+    if [ $? -ne 0 ] ; then
+        kubectl delete namespace $namespace_name
+        exit 1
+    fi
+    echo ""
+    echo "- Providing Service Account admin access to Namespace."
+    kubectl create rolebinding spark${app_name}RoleBinding --clusterrole=admin --serviceaccount=${namespace_name}:sparkadm-${app_name} --namespace=$namespace_name 
+    if [ $? -ne 0 ] ; then
+        kubectl delete namespace $namespace_name
+        kubectl delete serviceaccount sparkadm-${app_name} -n $namespace_name
+    fi
+
+}
+
+# Create Kubernetes deployment artifact
+generate_deployment() {
+
+    echo "Genetation of Kubernetes deployment artifacts."
+    cp -r ${script_home}/build_kubernetes_airflow ${script_home}/${app_name}
+    [ $? -ne 0 ] && exit 1
+    secret_name=$(kubectl get serviceaccount sparkadm-${app_name} -n ${namespace_name} -o jsonpath='{.secrets[0].name}')
+    [ -z "${secret_name}" ] && exit 1
+    find ${script_home}/${app_name}/ -type f -exec sed -i 's/__APP-ID__/'${app_name}'/g' {} \;
+    find ${script_home}/${app_name}/ -type f -exec sed -i 's/__APP-NAMESPACE__/'${namespace_name}'/g' {} \;
+    find ${script_home}/${app_name}/ -type f -exec sed -i 's/__SERV-ACCNT-SECRET__/'${secret_name}'/g' {} \;
+    find ${script_home}/${app_name}/ -type f -exec sed -i 's/__PROJECT_ROOT__/'${script_home}'/g' {} \;
+    echo "Completed generating deployment artifacts at ${script_home}/${app_name}."
+
+}
+
+# Tool help message generator
 usage(){
     echo ""
     echo "TITLE: Spark Kubernetes Build - Tool"
-    echo "EXECUTION: build [BUILD ENVIRONMENT] [BUILD OPTIONS] [IMAGE] [NAMESPACES]"
+    echo "================================================================================================================"
+    echo ""
+    echo "EXECUTION: build -actions=[BUILD OPTIONS] -namespace=[NAMESPACE] -appname=[APP NAME] -runtime=[BUILD ENV]"
     echo "PARAMETERS:"
-    echo "           BUILD ENVIRONMENT - Your image build environment. Provide one of the below option."
-    echo "                               docker - If you want to build and deploy image to your local docker platform."
-    echo "                               kube - If you want to build and deploy image to your Kubernetes(Minikube) platform"
     echo "           BUILD OPTIONS - Your build actions. Chain action by adding comma (,) separated action."
     echo "                           clean - Clean intermediate images and old unused container."
     echo "                           stop - Stop any container running."
     echo "                           build - Build image."
-    echo "           [OPT] IMAGE - Image to build. Default: Spark."
-    echo "           [OPT] NAMESPACES - Namespace to stop and clean container."
+    echo "                           [K8s Only] envconfig - Configure Kubernetes deployment environment."
+    echo "                           [K8s Only] genconfig - Generate environment specific deployment artifact."
+    echo "           [K8s Only] APP NAME - Application Name."
+    echo "           [K8s Only] NAMESPACES - Namespace of Application."
+    echo "           BUILD ENVIRONMENT - Your image build environment. Provide one of the below option."
+    echo "                               docker - If you want to build and deploy image to your local docker platform."
+    echo "                               kube - If you want to build and deploy image to your Kubernetes(Minikube) platform"
+    echo ""
+    echo "================================================================================================================"
+    echo ""
 }
 
 # __MAIN__
 
-if [ -z "${1}" ] ; then
-    echo "ERROR: Need to pass your build parameter. Exiting !!!"
-    usage
-    exit 1
-fi
-build_env=$1
+script_home="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Defaults
+build_env="kube"
+build_option=""
+namespace_name="default"
+app_name="test"
+
+# Parse arguments
+for arg in $@
+do
+  case $arg in
+    -actions=*)    build_option=$(echo $arg | awk -F= '{ print $2 }')
+                  echo "Actions: $build_option"
+                  shift
+                  ;;
+    -namespace=*) namespace_name=$(echo $arg | awk -F= '{ print $2 }')
+                  echo "Namespace: $namespace_name"
+                  shift
+                  ;;
+    -appname=*)   app_name=$(echo $arg | awk -F= '{ print $2 }')
+                  echo "Namespace: $app_name"
+                  shift
+                  ;;
+    -runtime=*)   build_env=$(echo $arg | awk -F= '{ print $2 }')
+                  echo "Runtime: $build_env"
+                  shift
+                  ;;
+    *)            echo "Wrong argument. - ${arg}"
+                  usage
+                  exit 1
+  esac
+done
+
+# Validate arguments
 if [ "${build_env}" != "kube" -a "${build_env}" != "docker" ] ; then
     echo "ERROR: Need to pass which environment you want to build. Exiting !!!"
     usage
     exit 1
 fi 
-echo "OPTIONS PASSED: $2"
-[ -z "${2}" ] && exit 0
-for i in $(echo ${2} | tr ',' '\n')
+
+[ -z "${build_option}" ] && exit 0
+for i in $(echo ${build_option} | tr ',' '\n')
 do
-    if [ "${i}" != "clean" -a "${i}" != "stop" -a ${i} != "build" ] ; then
+    if [ "${i}" != "clean" -a "${i}" != "stop" -a ${i} != "build" -a ${i} != "envconfig" -a ${i} != "genconfig" ] ; then
         echo "ERROR: Need to pass valid option. Exiting !!!"
         usage
         exit 1
     fi
 done
-build_option=$2
 
-
-image_name="spark"
-namespace_name="default"
-if [ ! -z "${3}" ] ; then
-    image_name="$3"
-    if [ ! -z "${4}" ] ; then
-        namespace_name="$4"
+# Validating required binary
+if [ "${build_env}" == "kube" ] ; then
+    if [ $(which kubectl ; echo $?) -ne 0 -o $(which minikube ; echo $?) -ne 0 ] ; then
+        echo "ERROR: You need to have minikube and kubectl in your path. Exiting !!!"
+        exit 1
     fi
 fi
 
+# Setting Image repository as per runtime
 if [ "${build_env}" == "kube" ] ; then
     echo "INFO: Building for Kubernetes, thus setting Kubernetes Repository."
-    eval $(~/minikube docker-env)
+    eval $(minikube docker-env)
 fi
 
+# Executing build actions
 for i in $(echo ${build_option} | tr ',' '\n')
 do
-    ${i}
+    echo "Executing $i."
+    #${i}
 done

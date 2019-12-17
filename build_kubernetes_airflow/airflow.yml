@@ -1,43 +1,49 @@
 apiVersion: v1
 kind: Pod
 metadata: 
-    name: airflow
-    namespace: spark
+    name: airflow-__APP-ID__
+    namespace: __APP-NAMESPACE__
     labels:
-        app: airflow
+        app: airflow-__APP-ID__
 spec: 
     containers:
-    -   name: airflow
+    -   name: airflow-__APP-ID__
         image: sanmuk21/sdh-airflow:1.0.1.10.2
         ports:
-        - name: airflow-ui
+        - name: airflow-__APP-ID__
           containerPort: 8080
-        - name: spark-client
+        - name: client-__APP-ID__
           containerPort: 4400
-        - name: spark-client-bm
+        - name: client-bm-__APP-ID__
           containerPort: 65000
         volumeMounts:
         -   name: app-volume
             mountPath: /apps
         -   name: spark-history-volume
             mountPath: /spark-history
+        -   name: service-account-secret
+            mountPath: /secrets
+            readOnly: True
     volumes:
     -   name: app-volume
         persistentVolumeClaim:
-            claimName: airflow-volume-claim
+            claimName: airflow-vc-__APP-ID__
     -   name: spark-history-volume
         persistentVolumeClaim:
-            claimName: spark-history-volume-claim
+            claimName: history-vc-__APP-ID__
+    -   name: service-account-secret
+        secret:
+            secretName: __SERV-ACCNT-SECRET__
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: airflow
-  namespace: spark
+  name: airflow-__APP-ID__
+  namespace: __APP-NAMESPACE__
 spec:
   selector:
-    app: airflow
+    app: airflow-__APP-ID__
   ports:
     - protocol: TCP
       port: 8080
@@ -48,11 +54,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: spark-client
-  namespace: spark
+  name: client-__APP-ID__
+  namespace: __APP-NAMESPACE__
 spec:
   selector:
-    app: airflow 
+    app: airflow-__APP-ID__
   ports:
     - protocol: TCP
       port: 4400
@@ -63,11 +69,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: spark-client-bm
-  namespace: spark
+  name: client-bm-__APP-ID__
+  namespace: __APP-NAMESPACE__
 spec:
   selector:
-    app: airflow 
+    app: airflow-__APP-ID__
   ports:
     - protocol: TCP
       port: 65000

@@ -1,3 +1,5 @@
+# Sample Spark Job Runner with Airflow on Kubernetes
+
 import socket
 from builtins import range
 from datetime import timedelta,datetime
@@ -7,9 +9,11 @@ from airflow.models import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.operators.spark_submit_operator import SparkSubmitOperator
 
+# Collecting Host IP (used to identify Spark Client to Spark Executor)
 host_name = socket.gethostname()
 host_ip = socket.gethostbyname(host_name)
 
+# DAG configuration
 dag = DAG(
     dag_id='airflow_spark_application_v1',
     schedule_interval='0 0 * * *',
@@ -18,24 +22,28 @@ dag = DAG(
     catchup=False
 )
 
+# Create Spark Cluster
 cluster_create = BashOperator(
     task_id='cluster_create',
     bash_command="/apps/cluster.sh create ",
     dag=dag
 )
 
+# Wait for Cluster to Startup
 cluster_start_wait = BashOperator(
     task_id='cluster_start_wait',
     bash_command="/apps/cluster.sh test ",
     dag=dag
 )
 
+# Create Airflow Connection Object to Spark Cluster
 cluster_connection_create = BashOperator(
     task_id='cluster_connection_create',
     bash_command="/apps/cluster.sh connection_create ",
     dag=dag
 )
 
+# Execute Spark Job in Client Mode
 spark_application = SparkSubmitOperator(
     task_id='spark_application',
     dag=dag,
@@ -44,16 +52,19 @@ spark_application = SparkSubmitOperator(
     application='/apps/app.py'
 )
 
+# Delete Airflow Connection Object
 cluster_connection_delete = BashOperator(
     task_id='cluster_connection_delete',
     bash_command="/apps/cluster.sh connection_delete ",
     dag=dag
 )
 
+# Create Spark Cluster
 cluster_delete = BashOperator(
     task_id='cluster_delete',
     bash_command="/apps/cluster.sh delete ",
     dag=dag
 )
 
+# DAG Task Ordering
 cluster_create >> cluster_start_wait >> cluster_connection_create >> spark_application >> cluster_connection_delete >> cluster_delete

@@ -2,8 +2,7 @@
   "kind": "Service",
   "apiVersion": "v1",
   "metadata": {
-    "name": "spark-master-ui",
-    "namespace": "spark"
+    "name": "spark-master-ui-__APP-ID__",
   },
   "spec": {
     "ports": [
@@ -13,7 +12,7 @@
       }
     ],
     "selector": {
-      "app": "spark"
+      "app": "spark-__APP-ID__"
     },
     "type": "NodePort"
   }    

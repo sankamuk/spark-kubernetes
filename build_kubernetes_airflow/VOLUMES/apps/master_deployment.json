@@ -2,34 +2,33 @@
   "apiVersion": "apps/v1",
   "kind": "Deployment",
   "metadata":{
-    "name": "spark",
-    "namespace": "spark",
+    "name": "spark-__APP-ID__",
     "labels":{
-      "app": "spark"
+      "app": "spark-__APP-ID__"
     }
   },
   "spec": {
     "replicas" : 1,
     "selector": {
       "matchLabels" : {
-        "app": "spark"
+        "app": "spark-__APP-ID__"
       }
     },
     "template" : {
       "metadata" : {
         "labels" : {
-          "app": "spark"
+          "app": "spark-__APP-ID__"
         }
       },
       "spec":{
         "containers":[
           {
-            "name": "spark",
+            "name": "spark-__APP-ID__",
             "image": "sanmuk21/sdh-spark-kubernetes:1.0.2.4",
             "env": [
               {
                 "name": "MASTER_SPARK",
-                "value": "spark-master"
+                "value": "spark-master-__APP-ID__"
               },
               {
                 "name": "MASTER_SPARK_PORT",
