@@ -1,3 +1,4 @@
+#!/bin/bash
 # Spark Kubernetes Build - Tool
 # Version: 1.0
 
@@ -37,10 +38,9 @@ stop() {
 # Build image
 image_build() {
 
-echo "Starting to build containers"
+    echo "Starting to build containers"
 
-if [ "${image_name}" == "spark" ] ; then
-    echo "Starting to build Spark Container."
+    echo "- Starting to build Spark Container."
     cd BUILD_BINARY/spark
     if [ ! -d spark2 ]
     then
@@ -51,26 +51,21 @@ if [ "${image_name}" == "spark" ] ; then
         else
             curl -s -k https://www-eu.apache.org/dist/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz --output spark-2.4.4-bin-hadoop2.7.tgz
         fi
-        echo "Extracting Spark"
+        echo "- Extracting Spark"
         tar -zxvf spark-2.4.4-bin-hadoop2.7.tgz
         mv spark-2.4.4-bin-hadoop2.7 spark2
         rm -f spark-2.4.4-bin-hadoop2.7.tgz
-
-        echo "Distributing container specific configuration and scripts"
-        #cp BUILD_BINARY/conf/* BUILD_BINARY/spark2/conf/
-        #cp BUILD_BINARY/script/* BUILD_BINARY/spark2/sbin/
     fi
-    echo "Creating Spark Server image"
+    echo "- Creating Spark Server image"
     docker build . -t sanmuk21/sdh-spark-kubernetes:1.0.2.4
     #docker push sanmuk21/sdh-spark-kubernetes:1.0.2.4
     cd ../../
-elif [ "${image_name}" == "airflow" ] ; then
-    echo "Starting to build Airflow Container."
+
+    echo "- Starting to build Airflow Container."
     cd BUILD_BINARY/airflow
     docker build . -t sanmuk21/sdh-airflow:1.0.1.10.2
     #docker push sanmuk21/sdh-airflow:1.0.1.10.2
     cd ../../
-fi
 
 }
 
