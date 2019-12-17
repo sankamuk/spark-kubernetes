@@ -151,9 +151,11 @@ $ ./build -actions=stop,clean -namespace=spark -appname=test -runtime=kube
 ```
 
 
+
 ## Congigure Your Application
 
 For detail about how to configure the project to run your application you should read the README inside the build_kubernetes_airflow architecture folder. There you will find details about the kubernetes deployment artifact.
+
 
 
 ## Demo videos
