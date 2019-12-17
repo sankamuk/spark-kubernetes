@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Pod
+metadata: 
+    name: history-__APP-ID__
+    namespace: __APP-NAMESPACE__
+    labels:
+        app: history-__APP-ID__
+spec: 
+    containers:
+    -   name: history-__APP-ID__
+        image: sanmuk21/sdh-spark-kubernetes:1.0.2.4
+        command: [ "/sdh/spark2/sbin/start-history" ]
+        ports:
+        - containerPort: 8888
+        volumeMounts:
+        -   name: history-volume-__APP-ID__
+            mountPath: /spark-history
+    volumes:
+    -   name: history-volume-__APP-ID__
+        persistentVolumeClaim:
+            claimName: history-vc-__APP-ID__
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: history-__APP-ID__
+spec:
+  selector:
+    app: history-__APP-ID__
+  ports:
+    - protocol: TCP
+      port: 8888
+      targetPort: 8888
+  type: NodePort

@@ -138,6 +138,12 @@ usage(){
 
 script_home="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# Host checker
+if [ ! -f /bin/bash ] ; then
+  echo "ERROR: No BASH. Exiting !!!"
+  exit 1
+fi
+
 # Defaults
 build_env="kube"
 build_option=""
@@ -191,6 +197,10 @@ done
 if [ "${build_env}" == "kube" ] ; then
     if [ $(which kubectl ; echo $?) -ne 0 -o $(which minikube ; echo $?) -ne 0 ] ; then
         echo "ERROR: You need to have minikube and kubectl in your path. Exiting !!!"
+        exit 1
+    fi
+    if [ $(minikube status | wc -l) -ne $(minikube status | grep -i running | wc -l) ] ; then
+        echo "ERROR: Kubernetes Cluster not running. Exiting !!!"
         exit 1
     fi
 fi
