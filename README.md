@@ -3,6 +3,20 @@
 Production ready Apache Spark runtime on Kubernetes.
 
 
+- [Features](#features)
+- [Project Detail](#project-detail)
+- [Usage](#usage)
+  * [Understanding the Build Tool](#understanding-the-build-tool)
+  * [Check Prerequisite](#check-prerequisite)
+  * [Run Build Tool](#run-build-tool)
+  * [Deploy your Environment](#deploy-your-environment)
+  * [Check your Job Status](#check-your-job-status)
+  * [Run History Server your Spark Job Dashboard](#run-history-server-your-spark-job-dashboard)
+  * [Delete your deployment](#delete-your-deployment)
+- [Congigure Your Application](#congigure-your-application)
+- [Demo videos](#demo-videos)
+- [TO DO](#to-do)
+
 
 ## Features:
 
