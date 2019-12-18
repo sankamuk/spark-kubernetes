@@ -15,6 +15,7 @@ RUN pip install --ignore-installed six
 
 ENV PATH="/sdh/spark2/sbin:/sdh/spark2/bin:${PATH}"
 COPY start.sh /start.sh
+RUN chmod 755 /start.sh
 
 EXPOSE 8080
 

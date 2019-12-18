@@ -1,7 +1,6 @@
 eval $(/Users/apple/minikube docker-env)
-alias kl='kubectl -n spark logs '
-alias kg='kubectl -n spark get all'
-alias kgs='kubectl -n spark get services'
-alias kc='kubectl -n spark create -f '
-alias kd='kubectl -n spark delete -f '
+alias kl='kubectl -n __APP-NAMESPACE__ logs '
+alias kg='kubectl -n __APP-NAMESPACE__ get all'
+alias kc='kubectl -n __APP-NAMESPACE__ create -f '
+alias kd='kubectl -n __APP-NAMESPACE__ delete -f '
 
