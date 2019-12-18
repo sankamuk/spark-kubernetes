@@ -1,8 +1,41 @@
-# Application Volume
+# Airflow Volume
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: airflow-v-__APP-ID__
+  namespace: __APP-NAMESPACE__
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 50Mi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "__PROJECT-ROOT__/__APP-ID__/VOLUMES/history/airflow"
+
+---
+# Volume Claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: airflow-vc-__APP-ID__
+  namespace: __APP-NAMESPACE__
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Mi
+
+---
+# Application Volume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: app-v-__APP-ID__
   namespace: __APP-NAMESPACE__
   labels:
     type: local
@@ -20,7 +53,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: airflow-vc-__APP-ID__
+  name: app-vc-__APP-ID__
   namespace: __APP-NAMESPACE__
 spec:
   storageClassName: manual

@@ -1,12 +1,13 @@
 #!/bin/bash
 
-airflow initdb
+if [ ! -f /root/airflow/airflow.db ] ; then
+    airflow initdb
+    mkdir -p /root/airflow/dags
+    cp /apps/airflow_*py /root/airflow/dags/
+fi
 
 airflow scheduler &
 
-mkdir -p /root/airflow/dags
-cp /apps/airflow_*py /root/airflow/dags/
-
-sleep 15
+sleep 10
 
 airflow webserver 

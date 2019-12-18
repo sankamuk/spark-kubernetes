@@ -1,38 +1,49 @@
-apiVersion: v1
-kind: Pod
-metadata: 
-    name: airflow-__APP-ID__
-    namespace: __APP-NAMESPACE__
-    labels:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-__APP-ID__
+spec:
+  selector:
+    matchLabels:
+      app: airflow-__APP-ID__
+  replicas: 1 
+  template:
+    metadata:
+      labels:
         app: airflow-__APP-ID__
-spec: 
-    containers:
-    -   name: airflow-__APP-ID__
+    spec:
+      containers:
+      - name: airflow-__APP-ID__
         image: sanmuk21/sdh-airflow:1.0.1.10.2
         ports:
-        - name: airflow-__APP-ID__
-          containerPort: 8080
-        - name: client-__APP-ID__
-          containerPort: 4400
-        - name: client-bm-__APP-ID__
-          containerPort: 65000
+        -   name: airflow-__APP-ID__
+            containerPort: 8080
+        -   name: client-__APP-ID__
+            containerPort: 4400
+        -   name: client-bm-__APP-ID__
+            containerPort: 65000
         volumeMounts:
         -   name: app-volume
             mountPath: /apps
+        -   name: airflow-volume
+            mountPath: /root/airflow
         -   name: spark-history-volume
             mountPath: /spark-history
         -   name: service-account-secret
             mountPath: /secrets
             readOnly: True
-    volumes:
-    -   name: app-volume
-        persistentVolumeClaim:
+      volumes:
+      -   name: app-volume
+          persistentVolumeClaim:
+            claimName: app-vc-__APP-ID__
+      -   name: airflow-volume
+          persistentVolumeClaim:
             claimName: airflow-vc-__APP-ID__
-    -   name: spark-history-volume
-        persistentVolumeClaim:
+      -   name: spark-history-volume
+          persistentVolumeClaim:
             claimName: history-vc-__APP-ID__
-    -   name: service-account-secret
-        secret:
+      -   name: service-account-secret
+          secret:
             secretName: __SERV-ACCNT-SECRET__
 
 ---
