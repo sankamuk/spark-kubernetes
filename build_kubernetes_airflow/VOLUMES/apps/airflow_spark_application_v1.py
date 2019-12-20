@@ -60,7 +60,7 @@ cluster_connection_delete = BashOperator(
     dag=dag
 )
 
-# Create Spark Cluster
+# Create Spark Delete
 cluster_delete = BashOperator(
     task_id='cluster_delete',
     bash_command="/apps/cluster.sh delete ",
