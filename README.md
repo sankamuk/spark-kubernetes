@@ -174,11 +174,11 @@ For detail about how to configure the project to run your application you should
 
 ## Demo videos
 
-* Environment Check -
-* Build -
-* Deploy Your Job -
-* Validate -
-
+* Environment Check - https://youtu.be/zvAUDvWUhHc
+* Build - https://youtu.be/_oHNaCszRgs 		https://youtu.be/p86_qYBQH0M
+* Deploy Your Job - https://youtu.be/Ec3LAEsqfvw
+* Validate - https://youtu.be/gE61rOSI1p4		https://youtu.be/T0xjiXcGEGs
+* Cleanup - https://youtu.be/T0xjiXcGEGs
 
 
 ## TO DO
