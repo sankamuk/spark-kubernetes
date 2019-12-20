@@ -6,6 +6,7 @@ from datetime import timedelta,datetime
 
 import airflow
 from airflow.models import DAG
+from airflow.utils.trigger_rule import TriggerRule
 from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.operators.spark_submit_operator import SparkSubmitOperator
 
@@ -63,6 +64,7 @@ cluster_connection_delete = BashOperator(
 cluster_delete = BashOperator(
     task_id='cluster_delete',
     bash_command="/apps/cluster.sh delete ",
+    trigger_rule=TriggerRule.ONE_FAILED,
     dag=dag
 )
 
