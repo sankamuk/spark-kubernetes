@@ -119,13 +119,13 @@ $ ./build -actions=build,envconfig,genconfig -namespace=spark -appname=test -run
 - Deploy your persistent storage to publish your application in Airflow Executor and Spark History volume all over.
 
 ```
-$ ./utility.sh deploystorage
+$ ./test/utility.sh deploystorage
 ``` 
 
 - Deploy your Airflow instance which will orchestrate your Spark Job.
 
 ```
-$ ./utility.sh deployairflow
+$ ./test/utility.sh deployairflow
 ```
 
 
@@ -134,7 +134,7 @@ $ ./utility.sh deployairflow
 - Get your Airflow UI. 
 
 ```
-$ ./utility.sh airflowui
+$ ./test/utility.sh airflowui
 ```
 
 - Enable disbale your DAG, trigger or let is run as per schedule from your Airflow UI. Also check your Job execution status and logs.
@@ -145,13 +145,13 @@ $ ./utility.sh airflowui
 - Run History Server Instance
 
 ```
-$ ./utility.sh deployhistory
+$ ./test/utility.sh deployhistory
 ```
 
 - Check History Server UI
 
 ```
-$ ./utility.sh historyui
+$ ./test/utility.sh historyui
 ```
 
 
