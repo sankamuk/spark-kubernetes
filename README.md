@@ -13,7 +13,7 @@ Production ready Apache Spark runtime on Kubernetes.
   * [Check your Job Status](#check-your-job-status)
   * [Run History Server your Spark Job Dashboard](#run-history-server-your-spark-job-dashboard)
   * [Delete your deployment](#delete-your-deployment)
-- [Congigure Your Application](#congigure-your-application)
+- [Congigure Your Application](#configure-your-application)
 - [Demo videos](#demo-videos)
 - [TO DO](#to-do)
 
@@ -166,7 +166,7 @@ $ ./build -actions=stop,clean -namespace=spark -appname=test -runtime=kube
 
 
 
-## Congigure Your Application
+## Configure Your Application
 
 For detail about how to configure the project to run your application you should read the README inside the build_kubernetes_airflow architecture folder. There you will find details about the kubernetes deployment artifact.
 
