@@ -98,9 +98,14 @@ kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100
 - Before you start using it download the project.
 
 ```
-jar xvf <(curl -sL https://github.com/sankamuk/spark-kubernetes/archive/master.zip)
+$ jar xvf <(curl -sL https://github.com/sankamuk/spark-kubernetes/archive/master.zip)
 ```
 
+***NOTE:*** This way fo download often remove files permssion, creates issue specially for the bash script and can render your job execution issue. Thus after you download you can just give give execution right to all your bash scripts.
+```
+$ find . -type f -name *.sh -exec chmod a+x '{}' \;
+$ find . -type f -name build -exec chmod a+x '{}' \;
+```
 
 ### Run Build Tool 
 
