@@ -42,7 +42,7 @@ metadata:
 spec:
   storageClassName: manual
   capacity:
-    storage: 50Mi
+    storage: 100Mi
   accessModes:
     - ReadWriteMany
   hostPath:
@@ -61,7 +61,7 @@ spec:
     - ReadWriteMany
   resources:
     requests:
-      storage: 50Mi
+      storage: 100Mi
 
 ---
 # Application Volume
@@ -75,7 +75,7 @@ metadata:
 spec:
   storageClassName: manual
   capacity:
-    storage: 50Mi
+    storage: 150Mi
   accessModes:
     - ReadWriteMany
   hostPath:
@@ -94,4 +94,4 @@ spec:
     - ReadWriteMany
   resources:
     requests:
-      storage: 50Mi
+      storage: 150Mi

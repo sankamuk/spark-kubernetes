@@ -37,13 +37,6 @@ cluster_start_wait = BashOperator(
     dag=dag
 )
 
-# Create Airflow Connection Object to Spark Cluster
-cluster_connection_create = BashOperator(
-    task_id='cluster_connection_create',
-    bash_command="/apps/cluster.sh connection_create ",
-    dag=dag
-)
-
 # Execute Spark Job in Client Mode
 spark_application = SparkSubmitOperator(
     task_id='spark_application',
@@ -53,20 +46,20 @@ spark_application = SparkSubmitOperator(
     application='/apps/app.py'
 )
 
-# Delete Airflow Connection Object
-cluster_connection_delete = BashOperator(
-    task_id='cluster_connection_delete',
-    bash_command="/apps/cluster.sh connection_delete ",
+# Delete Spark Cluster
+cluster_delete = BashOperator(
+    task_id='cluster_delete',
+    bash_command="/apps/cluster.sh delete ",
     dag=dag
 )
 
-# Create Spark Delete
-cluster_delete = BashOperator(
-    task_id='cluster_delete',
+# Delete Spark Cluster on Failure
+cluster_delete_onfailure = BashOperator(
+    task_id='cluster_delete_onfailure',
     bash_command="/apps/cluster.sh delete ",
     trigger_rule=TriggerRule.ONE_FAILED,
     dag=dag
 )
 
 # DAG Task Ordering
-cluster_create >> cluster_start_wait >> cluster_connection_create >> spark_application >> cluster_connection_delete >> cluster_delete
+cluster_create >> cluster_start_wait >> spark_application >> cluster_delete >> cluster_delete_onfailure
