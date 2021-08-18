@@ -2,6 +2,7 @@
 
 ![Kubernetes](https://img.shields.io/badge/plat-Kubernetes-brightgreen.svg)
 ![Apache Spark](https://img.shields.io/badge/lib-Spark-brightgreen.svg)
+![Apache Airflow](https://img.shields.io/badge/sch-Airflow-brightgreen.svg)
 ![Shell](https://img.shields.io/badge/lang-shell-brightgreen.svg)
 
 Production ready Apache Spark runtime on Kubernetes.
